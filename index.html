@@ -777,8 +777,8 @@
             const popupHeight = 150;
             
             // 修复1：安全边距改为 5px
-            const maxX = window.innerWidth - renderedWidth - 5;
-            const maxY = window.innerHeight - popupHeight - 5;
+            const maxX = window.innerWidth - renderedWidth - 1;
+            const maxY = window.innerHeight - popupHeight - 1;
 
             do {
                 x = Math.max(0, Math.random() * maxX);
