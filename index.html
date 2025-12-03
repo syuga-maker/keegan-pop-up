@@ -116,6 +116,7 @@
             background: linear-gradient(135deg, #4a90e2, #6aa9ff);
             color: white;
 
+
             border: none;
             padding: 14px 30px;
             font-size: 1.1rem;
@@ -164,7 +165,7 @@
         .popup {
             position: absolute;
             width: 280px;
-            max-width: 80vw; 
+            max-width: 80vw; /* 关键：最大宽度为视口宽度的80% */
             padding: 15px;
             z-index: 100;
             animation: randomPop 0.4s ease-out;
@@ -179,13 +180,10 @@
         
         /* 汇聚特效：被吸入中心的类 */
         .popup.implode {
-            /* 强制覆盖所有位置样式 */
             left: 50% !important;
             top: 50% !important;
-            /* 居中并缩小旋转 */
             transform: translate(-50%, -50%) scale(0) rotate(360deg) !important;
             opacity: 0;
-            /* 慢速过渡，制造吸入感 */
             transition: all 1.2s ease-in-out !important;
             pointer-events: none;
         }
@@ -257,14 +255,14 @@
             transform: translate(-50%, -50%);
             font-size: 15vw;
             color: rgba(74, 144, 226, 0.2); 
-            z-index: 1500; /* 始终前置 */
+            z-index: 1500;
             font-weight: 900;
             pointer-events: none;
             display: none;
             user-select: none;
             font-feature-settings: "tnum";
             text-shadow: 0 0 30px rgba(255,255,255,0.8);
-            transition: opacity 1s; /* 倒计时消失也加过渡 */
+            transition: opacity 1s;
         }
         
         @media (min-width: 768px) {
@@ -770,18 +768,30 @@
             
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            const safeRadius = isMobile ? 120 : 0; 
+            // 修复点1：减小手机端的安全半径，从120减到60，让弹窗更靠近中间
+            const safeRadius = isMobile ? 60 : 0; 
 
             let x, y, attempts = 0;
-            const popupWidth = isMobile ? 200 : 280;
+            
+            // 修复点2：动态计算实际渲染宽度，防止溢出
+            // 如果是手机，宽度设为屏幕的80%（对应CSS max-width:80vw）
+            // 否则使用默认280px
+            const renderedWidth = isMobile ? (window.innerWidth * 0.8) : 280;
             const popupHeight = 150;
+            
+            // 添加10px的边距
+            const maxX = window.innerWidth - renderedWidth - 10;
+            const maxY = window.innerHeight - popupHeight - 10;
 
             do {
-                x = Math.random() * (window.innerWidth - popupWidth);
-                y = Math.random() * (window.innerHeight - popupHeight);
-                const pCenterX = x + popupWidth / 2;
+                // 确保 x 在 [0, maxX] 之间
+                x = Math.max(0, Math.random() * maxX);
+                y = Math.max(0, Math.random() * maxY);
+                
+                const pCenterX = x + renderedWidth / 2;
                 const pCenterY = y + popupHeight / 2;
                 const dist = Math.sqrt(Math.pow(pCenterX - centerX, 2) + Math.pow(pCenterY - centerY, 2));
+                
                 if (dist > safeRadius) break;
                 attempts++;
             } while (attempts < 10);
