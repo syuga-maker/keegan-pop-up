@@ -607,7 +607,8 @@
 
     <script>
         const isMobile = window.innerWidth <= 768;
-        const MAX_POPUPS = isMobile ? 35 : 150; 
+        // 修复3：手机上限制为25个弹窗，电脑保持150
+        const MAX_POPUPS = isMobile ? 25 : 150; 
         
         const sequentialMessages = [
             "我现在就来找你...", "真的好想你阿...", "我一直都在等在这一刻...",
@@ -758,6 +759,7 @@
         }
 
         function spawnPopup(text) {
+            // 达到最大数量限制时，移除最早的弹窗
             if (document.querySelectorAll('.popup').length > MAX_POPUPS) {
                 const old = document.querySelector('.popup');
                 if(old) old.remove();
@@ -766,34 +768,24 @@
             const popup = document.createElement('div');
             popup.className = 'popup';
             
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            // 修复点1：减小手机端的安全半径，从120减到60，让弹窗更靠近中间
-            const safeRadius = isMobile ? 60 : 0; 
+            // 修复2：取消中心禁区，safeRadius 设为 0
+            const safeRadius = 0; 
 
             let x, y, attempts = 0;
             
-            // 修复点2：动态计算实际渲染宽度，防止溢出
-            // 如果是手机，宽度设为屏幕的80%（对应CSS max-width:80vw）
-            // 否则使用默认280px
             const renderedWidth = isMobile ? (window.innerWidth * 0.8) : 280;
             const popupHeight = 150;
             
-            // 添加10px的边距
-            const maxX = window.innerWidth - renderedWidth - 10;
-            const maxY = window.innerHeight - popupHeight - 10;
+            // 修复1：安全边距改为 5px
+            const maxX = window.innerWidth - renderedWidth - 5;
+            const maxY = window.innerHeight - popupHeight - 5;
 
             do {
-                // 确保 x 在 [0, maxX] 之间
                 x = Math.max(0, Math.random() * maxX);
                 y = Math.max(0, Math.random() * maxY);
                 
-                const pCenterX = x + renderedWidth / 2;
-                const pCenterY = y + popupHeight / 2;
-                const dist = Math.sqrt(Math.pow(pCenterX - centerX, 2) + Math.pow(pCenterY - centerY, 2));
-                
-                if (dist > safeRadius) break;
-                attempts++;
+                // 由于 safeRadius 为 0，不再进行距离检查，直接生成坐标
+                break;
             } while (attempts < 10);
 
             popup.style.left = x + 'px';
@@ -812,39 +804,32 @@
             typeWriter(popup.querySelector('.popup-content'), text, 50);
         }
 
-        // 修改后的 endGame 函数：添加了汇聚特效
         function endGame() {
             gameState.isRunning = false;
             if (gameState.popupTimer) clearTimeout(gameState.popupTimer);
 
-            // 1. 获取所有现有弹窗
             const popups = document.querySelectorAll('.popup');
             
-            // 2. 触发“吸入黑洞”动画
             popups.forEach(p => {
-                // 添加特殊的过渡类，使它们飞向中心
                 p.classList.add('implode');
             });
 
-            // 3. 倒计时数字也慢慢消失
             const cd = document.getElementById('countdown');
             cd.style.opacity = '0';
 
-            // 4. 等待动画完成后（1.2秒），再清理DOM并显示爱心
             setTimeout(() => {
                 popups.forEach(p => p.remove());
                 cd.style.display = 'none';
 
                 const clickPrompt = document.getElementById('click-prompt');
                 clickPrompt.style.display = 'block';
-                // 添加爱心浮现动画
                 clickPrompt.style.animation = 'heartAppear 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 
                 clickPrompt.onclick = () => {
                     clickPrompt.style.display = 'none';
                     showFinalChoice();
                 };
-            }, 1200); // 时间要匹配 .implode 里的 transition 时间
+            }, 1200); 
         }
 
         function showFinalChoice() {
